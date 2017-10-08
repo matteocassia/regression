@@ -11,17 +11,23 @@ class LinearRegression extends Regression {
 
 class Regression {
 
+	private final double[] DEFAULT_COEFFICIENT_RANGE = {-5.0, +5.0};
+	private final int DEFAULT_COEFFICIENT_STEPS = 10;
+	private final double DEFAULT_ERROR_TRESHOLD = 1.0;
+
+	private int rounds = 0;
+
 	// Specifies whether coefficients are bounded or unbounded to a range; if unbounded, execution will only stop when the error threshold is reached
 	private boolean use_coefficient_range = true;
 
-	// The range that the values of the coefficients can have (e.g. if range equals 10, values will go from -5 to +5)
-	private double coefficient_range = 10.0;
+	// The range that the values of the coefficients can have (e.g. if range equals 10, values will range from -5 to +5)
+	private double[] coefficient_range = DEFAULT_COEFFICIENT_RANGE;
 
 	// The steps that the values of the coefficients will take in the range (e.g. if the steps are 100 and the range is 10, one step will be taken every 0.1)
-	private int coefficient_steps = 100;
+	private int coefficient_steps = DEFAULT_COEFFICIENT_STEPS;
 
 	// The value of the error which is considered satisfying; once a set of coefficients is found bearing an error lower than the threshold, execution will stop
-	private double error_threshold = 0.0;
+	private double error_threshold = DEFAULT_ERROR_TRESHOLD;
 
 	// The number of coefficients
 	private int degree;
@@ -34,7 +40,7 @@ class Regression {
 		this.degree = degree;
 	}
 
-	public void set_coefficient_range(double coefficient_range) {
+	public void set_coefficient_range(double[] coefficient_range) {
 		this.coefficient_range = coefficient_range;
 	}
 
@@ -46,7 +52,11 @@ class Regression {
 		this.error_threshold = error_threshold;
 	}
 
-	public double get_coefficient_range() {
+	public void set_use_coefficient_range(boolean use_coefficient_range) {
+		this.use_coefficient_range = use_coefficient_range;
+	}
+
+	public double[] get_coefficient_range() {
 		return this.coefficient_range;
 	}
 
@@ -58,18 +68,24 @@ class Regression {
 		return this.error_threshold;
 	}
 
+	public boolean get_use_coefficient_range() {
+		return this.use_coefficient_range;
+	}
+
 	public void start() {
 		double[] coefficients = new double[degree];
 		set_initial_coefficients(coefficients);
 		double lowest_error = -1;
-		
 		do {
 			double error = calculate_error(coefficients);
 			if(error <= lowest_error || lowest_error == -1) {
 				lowest_error = error;
 				print_report(coefficients, error);
-				if(lowest_error <= error_threshold) {
-					break;
+
+				if(!use_coefficient_range) {
+					if(error <= error_threshold) {
+						break;
+					}
 				}
 			}
 			update_coefficients(coefficients);
@@ -83,7 +99,7 @@ class Regression {
 		}
 		int count = 0;
 		for(int i = 0; i < degree; i += 1) {
-			if(coefficients[i] >= coefficient_range/2) {
+			if(coefficients[i] >= coefficient_range[1]) {
 				count += 1;
 			}
 		}
@@ -128,7 +144,7 @@ class Regression {
 
 	private void set_initial_coefficients(double[] coefficients) {
 		for(int i = 0; i < degree; i += 1) {
-			coefficients[i] = -coefficient_range/2.0;
+			coefficients[i] = coefficient_range[0];
 		}
 	}
 
@@ -139,101 +155,36 @@ class Regression {
 
 	private void update_coefficients(double[] coefficients) {
 		int i = 0;
-		while(i < degree) {
-			if(coefficients[i] < coefficient_range/2.0) {
-				coefficients[i] += coefficient_range/(double)coefficient_steps;
+		while(true) {
+			if(coefficients[i] < coefficient_range[1]) {
+				coefficients[i] += (coefficient_range[1]-coefficient_range[0])/(double)coefficient_steps;
 				break;
 			} else {
-				coefficients[i] = -coefficient_range/2.0;
-				i += 1;
+				if(i == degree - 1) {
+					if(use_coefficient_range) {
+						break;
+					} else {
+						rounds += 1;
+						double a = coefficient_range[0];
+						double b = coefficient_range[1];
+						double d = (b-a);
+						if(rounds % 2 == 0) {
+							coefficient_range[0] += d*rounds;
+							coefficient_range[1] += d*rounds;
+						} else {
+							coefficient_range[0] -= d*rounds;
+							coefficient_range[1] -= d*rounds;
+						}
+						set_initial_coefficients(coefficients);
+						i = 0;
+						break;
+					}
+				} else {
+					coefficients[i] = coefficient_range[0];
+					i += 1;
+				}
 			}
 		}
 	}
 
-
-
 }
-
-class DataSample {
-
-	private Point[] points;
-
-	public DataSample(Point[] points) {
-		this.points = points;
-	}
-
-	public Point[] get_points() {
-		return points;
-	}
-
-	public Point get(int n) {
-		return points[n];
-	}
-
-	public int get_number_of_points() {
-		return points.length;
-	}
-
-}
-
-class Point {
-
-	private double x;
-	private double y;
-
-	public Point(double x, double y) {
-		this.x = x;
-		this.y = y;
-	}
-
-	public double get_x() {
-		return x;
-	}
-
-	public double get_y() {
-		return y;
-	}
-
-}
-
-class Main {
-
-	public static void main(String[] args) {
-		/*
-		Point p1 = new Point(1.0, 1.0);
-		Point p2 = new Point(2.0, 2.0);
-		Point[] points = {p1, p2};
-		DataSample ds = new DataSample(points);
-		Model m = new Model(2, ds);
-		m.find();
-		*/
-
-		Point p1 = new Point(3.0, 5.0);
-		Point p2 = new Point(6.0, 8.0);
-		Point p3 = new Point(9.0, 7.0);
-		Point p4 = new Point(11.0, 9.0);
-		Point p5 = new Point(13.0, 11.0);
-		Point p6 = new Point(14.0, 10.0);
-		Point p7 = new Point(16.0, 11.0);
-		Point p8 = new Point(19.0, 11.0);
-		Point p9 = new Point(21.0, 14.0);
-		Point p10 = new Point(20.0, 13.0);
-		Point p11 = new Point(22.0, 13.0);
-		Point p12 = new Point(23.0, 16.0);
-		Point p13 = new Point(24.0, 16.0);
-		Point p14 = new Point(27.0, 16.0);
-
-		Point[] points = {p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14};
-		DataSample ds = new DataSample(points);
-		Regression m = new LinearRegression(ds);
-		m.start();
-
-	}
-
-}
-
-
-
-
-
-

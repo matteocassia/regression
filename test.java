@@ -23,7 +23,7 @@ class Main {
 		Regression m = new Regression(ds,3);
 		m.set_use_coefficient_range(false);
 		m.set_coefficient_steps(1000);
-		m.set_error_threshold(0.01);
+		m.set_error_threshold(0.9);
 		m.start();
 
 	}

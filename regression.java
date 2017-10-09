@@ -15,6 +15,7 @@ class Regression {
 	private final int DEFAULT_COEFFICIENT_STEPS = 10;
 	private final double DEFAULT_ERROR_TRESHOLD = 1.0;
 
+	// The rounds of execution for coefficient ranges (only used when the error threshold is used instead)
 	private int rounds = 0;
 
 	// Specifies whether coefficients are bounded or unbounded to a range; if unbounded, execution will only stop when the error threshold is reached
@@ -72,6 +73,7 @@ class Regression {
 		return this.use_coefficient_range;
 	}
 
+	// Iterates through combinations of coefficients, calculates the mean squared error and if the result is optimal, it is printed
 	public void start() {
 		double[] coefficients = new double[degree];
 		set_initial_coefficients(coefficients);
@@ -93,6 +95,7 @@ class Regression {
 		while(can_continue(coefficients));
 	}
 
+	// Checks whether execution should continue or not every combination has still been covered
 	private boolean can_continue(double[] coefficients) {
 		if(use_coefficient_range == false) {
 			return true;
@@ -106,6 +109,7 @@ class Regression {
 		return !(count == degree);
 	}
 
+	// Prints a summary of coefficients and their error
 	private void print_report(double[] coefficients, double error) {
 		System.out.print("Coefficients:");
 		for(int i = 0; i < degree; i++) {
@@ -118,6 +122,7 @@ class Regression {
 
 	}
 
+	// Calculates the mean squared error for every point in the data set
 	private double calculate_error(double[] coefficients) {
 		double sum = 0;
 		for(int i = 0; i < data_sample.get_number_of_points(); i += 1) {
@@ -132,6 +137,7 @@ class Regression {
 		return error;
 	}
 
+	// Calculates the value of the function with the given coefficient for the specified value
 	private double get_result(double[] coefficients, double value) {
 		double result = 0;
 		for(int i = 0; i < degree; i++) {
@@ -142,17 +148,14 @@ class Regression {
 		return result;
 	}
 
+	// Sets the initial values of the array of coefficients
 	private void set_initial_coefficients(double[] coefficients) {
 		for(int i = 0; i < degree; i += 1) {
 			coefficients[i] = coefficient_range[0];
 		}
 	}
 
-	private int get_number_of_combinations() {
-		int total = (int) Math.pow((double) coefficient_steps, (double) degree);
-		return total;
-	}
-
+	// Updates the values of coefficients after an error calculation
 	private void update_coefficients(double[] coefficients) {
 		int i = 0;
 		while(true) {
